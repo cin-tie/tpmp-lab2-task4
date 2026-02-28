@@ -1,0 +1,65 @@
+name: C Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install tree
+      run: sudo apt-get update && sudo apt-get install -y tree
+    
+    - name: Show directory structure
+      run: |
+        pwd
+        ls -la
+        tree
+    
+    - name: Build with Make
+      run: make
+    
+    - name: Check build artifacts
+      run: |
+        ls -la bin/
+        file bin/student_program
+    
+    - name: Create test data
+      run: |
+        mkdir -p data
+        cat > data/students.txt << 'EOF'
+Ivanov Ivan Ivanovich M Russian 175 70 2010-05-15 +375291234567 220001 Belarus Minsk Minsky Minsk Lenina 15 25 School123 5
+Petrov Petr Petrovich M Belarusian 168 65 2011-08-20 +375297654321 220002 Belarus Minsk Minsky Minsk Pushkina 10 30 School456 6
+Sidorova Anna Sergeevna F Russian 162 55 2010-03-10 +375339876543 220003 Belarus Minsk Minsky Minsk Gorkogo 5 15 School123 5
+Smirnov Alexey Ivanovich M Russian 180 75 2011-11-30 +375447894561 220004 Belarus Minsk Minsky Minsk Kolas 20 40 School789 6
+Kuznetsova Maria Petrovna F Belarusian 165 58 2010-07-22 +375257894567 220005 Belarus Minsk Minsky Minsk Bogdanovicha 8 12 School123 5
+EOF
+    
+    - name: Run the program
+      run: |
+        make run || true
+    
+    - name: Check output files
+      run: |
+        ls -la data/
+        if [ -f data/fifth_grade_students.txt ]; then
+          echo "=== Fifth Grade Students ==="
+          cat data/fifth_grade_students.txt
+        else
+          echo "Output file not found"
+        fi
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        path: |
+          bin/
+          data/
